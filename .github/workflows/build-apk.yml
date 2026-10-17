@@ -1,0 +1,38 @@
+
+name: Construir APK de Mi Licorería
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar proyecto
+        uses: actions/checkout@v4
+
+      - name: Preparar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Preparar Android
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar herramientas Android
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Descomprimir proyecto
+        run: |
+          unzip mi_licoreria_proyecto_android.zip -d proyecto
+
+      - name: Compilar aplicación
+        working-directory: proyecto/licoreria_android_project
+        run: gradle --no-daemon assembleDebug
+
+      - name: Guardar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: mi-licoreria-apk
+          path: proyecto/licoreria_android_project/app/build/outputs/apk/debug/app-debug.apk
