@@ -1,5 +1,4 @@
-
-name: Construir APK de Mi Licorería
+name: Construir APK de Licorería Claudia
 
 on:
   workflow_dispatch:
@@ -7,6 +6,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Descargar proyecto
         uses: actions/checkout@v4
@@ -15,26 +15,33 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
-      - name: Preparar Android
+      - name: Preparar Android SDK
         uses: android-actions/setup-android@v4
-        with:
-          accept-android-sdk-licenses: true
 
       - name: Instalar herramientas Android
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Descomprimir proyecto
         run: |
-          unzip mi_licoreria_proyecto_android.zip -d proyecto
+          if [ -f licoreria_claudia_proyecto_android.zip ]; then
+            unzip -o licoreria_claudia_proyecto_android.zip -d proyecto
+          else
+            echo "No se encontró el archivo licoreria_claudia_proyecto_android.zip"
+            exit 1
+          fi
 
       - name: Compilar aplicación
-        working-directory: proyecto/licoreria_android_project
-        run: gradle --no-daemon assembleDebug
+        working-directory: proyecto/licoreria_claudia_proyecto_android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon assembleDebug
 
       - name: Guardar APK
         uses: actions/upload-artifact@v4
         with:
-          name: mi-licoreria-apk
-          path: proyecto/licoreria_android_project/app/build/outputs/apk/debug/app-debug.apk
+          name: Licoreria-Claudia-apk
+          path: proyecto/licoreria_claudia_proyecto_android/app/build/outputs/apk/debug/app-debug.apk
