@@ -25,18 +25,38 @@ jobs:
           yes | sdkmanager --licenses
           sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Descomprimir proyecto
+      - name: Buscar y descomprimir proyecto
+        shell: bash
         run: |
-          if [ -f licoreria_claudia_proyecto_android.zip ]; then
-            unzip -o licoreria_claudia_proyecto_android.zip -d proyecto
-          else
-            echo "No se encontró el archivo licoreria_claudia_proyecto_android.zip"
+          set -e
+
+          ZIP_FILE=$(find . -maxdepth 1 -type f -iname "*.zip" | head -n 1)
+
+          if [ -z "$ZIP_FILE" ]; then
+            echo "No se encontró ningún archivo .zip en la raíz del repositorio."
             exit 1
           fi
 
+          echo "ZIP detectado: $ZIP_FILE"
+          mkdir -p proyecto
+          unzip -o "$ZIP_FILE" -d proyecto
+
+          PROJECT_DIR=$(find proyecto -maxdepth 3 -type d -name "app" | head -n 1 | sed 's#/app$##')
+
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "No se encontró la carpeta del proyecto Android dentro del ZIP."
+            echo "Estructura extraída:"
+            find proyecto -maxdepth 3 -print
+            exit 1
+          fi
+
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+
       - name: Compilar aplicación
-        working-directory: proyecto/licoreria_claudia_proyecto_android
+        shell: bash
         run: |
+          set -e
+          cd "$PROJECT_DIR"
           chmod +x ./gradlew
           ./gradlew --no-daemon assembleDebug
 
@@ -44,4 +64,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Licoreria-Claudia-apk
-          path: proyecto/licoreria_claudia_proyecto_android/app/build/outputs/apk/debug/app-debug.apk
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
