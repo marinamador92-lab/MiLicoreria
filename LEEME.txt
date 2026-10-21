@@ -14,6 +14,3 @@ NOTAS IMPORTANTES:
 - No se requiere permiso de internet en el APK: la app y el HTML están incluidos localmente.
 - Los datos se guardan en el almacenamiento del WebView en el teléfono. Conserva copias de seguridad desde la pestaña Datos.
 - Prueba con datos ficticios, cierra y vuelve a abrir la app y verifica persistencia antes de usarla en la contabilidad real.
-
-
-Personalización de marca: Licorería Claudia (La Paz · El Alto). La imagen de marca se encuentra en app/src/main/assets/licoreria_claudia.jpg y funciona sin internet.

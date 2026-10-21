@@ -2,66 +2,39 @@ name: Construir APK de Licorería Claudia
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Descargar proyecto
+      - name: Descargar el proyecto
         uses: actions/checkout@v4
 
-      - name: Preparar Java
+      - name: Configurar Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: '17'
 
-      - name: Preparar Android SDK
-        uses: android-actions/setup-android@v4
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
 
-      - name: Instalar herramientas Android
-        run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Buscar y descomprimir proyecto
-        shell: bash
-        run: |
-          set -e
+      - name: Instalar herramientas de Android
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
-          ZIP_FILE=$(find . -maxdepth 1 -type f -iname "*.zip" | head -n 1)
+      - name: Compilar APK
+        run: gradle --no-daemon assembleDebug
 
-          if [ -z "$ZIP_FILE" ]; then
-            echo "No se encontró ningún archivo .zip en la raíz del repositorio."
-            exit 1
-          fi
-
-          echo "ZIP detectado: $ZIP_FILE"
-          mkdir -p proyecto
-          unzip -o "$ZIP_FILE" -d proyecto
-
-          PROJECT_DIR=$(find proyecto -maxdepth 3 -type d -name "app" | head -n 1 | sed 's#/app$##')
-
-          if [ -z "$PROJECT_DIR" ]; then
-            echo "No se encontró la carpeta del proyecto Android dentro del ZIP."
-            echo "Estructura extraída:"
-            find proyecto -maxdepth 3 -print
-            exit 1
-          fi
-
-          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
-
-      - name: Compilar aplicación
-        shell: bash
-        run: |
-          set -e
-          cd "$PROJECT_DIR"
-          chmod +x ./gradlew
-          ./gradlew --no-daemon assembleDebug
-
-      - name: Guardar APK
+      - name: Publicar APK descargable
         uses: actions/upload-artifact@v4
         with:
-          name: Licoreria-Claudia-apk
-          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
+          name: licoreria-claudia-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
